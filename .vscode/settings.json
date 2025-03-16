@@ -1,0 +1,8 @@
+{
+  "python.defaultInterpreterPath": "MY_VENV",
+  "github.copilot.enable": {
+    "*": false
+  },
+  "github.copilot.editor.enableAutoCompletions": false,
+  "python.REPL.enableREPLSmartSend": false
+}
