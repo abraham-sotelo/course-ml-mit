@@ -1,0 +1,7 @@
+__pycache__
+Datasets
+*.DS_Store
+**.gz
+sample_images
+*.bak
+*.pt
