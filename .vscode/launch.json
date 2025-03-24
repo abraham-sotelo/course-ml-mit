@@ -10,7 +10,7 @@
       "type": "debugpy",
       "request": "launch",
       "program": "${file}",
-      "cwd": "${workspaceFolder}/proy2/mnist/part1",
+      "cwd": "${workspaceFolder}/${relativeFileDirname}",
       "console": "integratedTerminal"
     }
   ]
