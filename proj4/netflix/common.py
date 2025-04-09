@@ -1,6 +1,8 @@
 """Mixture model for collaborative filtering"""
 from typing import NamedTuple, Tuple
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle, Arc
 
@@ -64,9 +66,9 @@ def plot(X: np.ndarray, mixture: GaussianMixture, post: np.ndarray,
             arc = Arc(point,
                       r,
                       r,
-                      0,
-                      theta,
-                      theta + offset,
+                      angle = 0,
+                      theta1 = theta,
+                      theta2 = theta + offset,
                       edgecolor=color[j])
             ax.add_patch(arc)
             theta += offset
