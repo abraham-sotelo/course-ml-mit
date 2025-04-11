@@ -33,7 +33,7 @@ def naiveem():
     for seed in range(5):
       mixture, post = common.init(X, K, seed)
       mixture, post, log_likelihood = naive_em.run(X, mixture, post)
-      log_likelihoods.append((K, seed ,log_likelihood))
+      log_likelihoods.append((K, seed, log_likelihood))
       print(f"K={K}, seed={seed}, log-likelihood={log_likelihood:.4f}")
     max_log_likelihood.append(max(log_likelihoods, key=lambda x: x[2]))
     common.plot(X, mixture, post, f"EM algorithm K={K}")
@@ -43,5 +43,21 @@ def naiveem():
     print(f"Cluster: {k}, seed: {seed}, log-likelihood: {log_likelihood:.5f}")
 
 
+# Problem 5. Bayesian Information Criterion
+def bic_em():
+  bics = []
+  for K in range(1,5):
+    mixture, post = common.init(X, K)
+    mixture, post, log_likelihood = naive_em.run(X, mixture, post)
+    bic = common.bic(X, mixture, log_likelihood)
+    print(f"K={K}, bic={bic:.6f}")
+    bics.append((K, bic))
+  k, best_bic = max(bics, key=lambda a:a[1])
+
+  print("\nBest BIC")
+  print(f"Cluster: {k}, Best BIC: {best_bic:.6f}")
+  
+
 #k_means()
-naiveem()
+#naiveem()
+bic_em()
