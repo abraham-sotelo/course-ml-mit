@@ -3,8 +3,6 @@ from typing import Tuple
 import numpy as np
 from common import GaussianMixture
 
-
-
 def estep(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, float]:
     """E-step: Softly assigns each datapoint to a gaussian component
 
@@ -17,7 +15,24 @@ def estep(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, float]:
             for all components for all examples
         float: log-likelihood of the assignment
     """
-    raise NotImplementedError
+    n, d = X.shape
+    K, _ = mixture.mu.shape
+    post = np.zeros((n, K))
+    weighted_likelihoods = np.zeros(K)
+
+    log_likelihood = 0
+    for i in range(n):
+        likelihood = np.float64(0.0)
+        weighted_likelihoods = np.zeros(K)
+        for j in range(K):
+            gaussian = np.exp(np.sum((X[i] - mixture.mu[j])**2)/(-2 * mixture.var[j])) / ((2 * np.pi * mixture.var[j])**(d/2))
+            likelihood += np.sum(mixture.p[j] * gaussian)
+            weighted_likelihoods[j] = mixture.p[j] * gaussian
+        post[i] = weighted_likelihoods/likelihood
+        log_likelihood += np.log(likelihood)
+  
+    return post, log_likelihood
+
 
 
 def mstep(X: np.ndarray, post: np.ndarray) -> GaussianMixture:
@@ -32,7 +47,24 @@ def mstep(X: np.ndarray, post: np.ndarray) -> GaussianMixture:
     Returns:
         GaussianMixture: the new gaussian mixture
     """
-    raise NotImplementedError
+    n, d = X.shape
+    _, K = post.shape
+    n_hat = np.sum(post, axis=0)
+    p_hat = n_hat / n
+    mu_hat = np.zeros((K,d))
+    var_hat = np.zeros(K)
+
+    for j in range(K):
+        S1 = 0
+        S2 = 0
+        for i in range(n):
+            S1 += post[i][j]*X[i]
+        mu_hat[j] = S1 / n_hat[j]
+        for i in range(n):
+            S2 += post[i][j]*np.sum((X[i] - mu_hat[j])**2)
+        var_hat[j] = S2 / (n_hat[j] * d)
+
+    return GaussianMixture(mu_hat, var_hat, p_hat)
 
 
 def run(X: np.ndarray, mixture: GaussianMixture,
@@ -50,4 +82,11 @@ def run(X: np.ndarray, mixture: GaussianMixture,
             for all components for all examples
         float: log-likelihood of the current assignment
     """
-    raise NotImplementedError
+    old_log_likelihood = None
+    log_likelihood = np.float64(0.0)
+    while old_log_likelihood is None or np.abs(log_likelihood - old_log_likelihood) > 1e-6 * np.abs(log_likelihood):
+      old_log_likelihood = log_likelihood
+      post, log_likelihood = estep(X, mixture)
+      mixture = mstep(X, post)
+
+    return (mixture, post, log_likelihood)
