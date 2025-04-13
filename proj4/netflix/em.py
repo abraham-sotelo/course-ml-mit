@@ -18,8 +18,29 @@ def estep(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, float]:
         float: log-likelihood of the assignment
 
     """
-    raise NotImplementedError
+    n, d = X.shape
+    K, _ = mixture.mu.shape
+    post = np.zeros((n, K))
 
+    total_log_likelihood = np.float64(0.0)
+    for i in range(n):
+        Cu = X[i].nonzero()[0]
+        d_Cu = len(Cu)
+        log_likelihood = np.float64(0.0)
+        log_weighted_likelihoods = np.zeros(K)
+        for j in range(K):
+            # Log-Gaussian
+            diff = X[i, Cu] - mixture.mu[j, Cu]
+            square_distance = np.sum(diff ** 2)
+            log_gaussian = square_distance/(-2. * mixture.var[j]) \
+                - ((d_Cu / 2) * np.log(2 * np.pi * mixture.var[j]))
+            # End Log-Gaussian
+            log_weighted_likelihoods[j] = np.log(mixture.p[j]) + log_gaussian
+        log_likelihood = logsumexp(log_weighted_likelihoods)
+        post[i] = np.exp(log_weighted_likelihoods - log_likelihood)
+        total_log_likelihood += log_likelihood
+
+    return (post, total_log_likelihood)
 
 
 def mstep(X: np.ndarray, post: np.ndarray, mixture: GaussianMixture,
@@ -55,7 +76,7 @@ def run(X: np.ndarray, mixture: GaussianMixture,
             for all components for all examples
         float: log-likelihood of the current assignment
     """
-    raise NotImplementedError
+    return estep(X, mixture)
 
 
 def fill_matrix(X: np.ndarray, mixture: GaussianMixture) -> np.ndarray:
