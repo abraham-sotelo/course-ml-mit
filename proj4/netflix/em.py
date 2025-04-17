@@ -18,7 +18,7 @@ def estep(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, float]:
         float: log-likelihood of the assignment
 
     """
-    n, d = X.shape
+    n, _ = X.shape
     K, _ = mixture.mu.shape
     post = np.zeros((n, K))
 
@@ -58,7 +58,42 @@ def mstep(X: np.ndarray, post: np.ndarray, mixture: GaussianMixture,
     Returns:
         GaussianMixture: the new gaussian mixture
     """
-    raise NotImplementedError
+    n, d = X.shape
+    _, K = post.shape
+    n_hat = np.sum(post, axis=0)   # OK
+    p_hat = n_hat / n              # OK
+    mu_hat = np.zeros([K,d])
+
+    numerator = np.zeros([K,d])
+    denominator = np.zeros([K,d])
+    for j in range(K):
+        for u in range(n):
+            Cu = X[u].nonzero()[0]
+            for l in Cu:
+                numerator[j, l] += post[u, j]*X[u, l]
+                denominator[j, l] += post[u, j]
+
+    for j in range(K):
+        for l in range(d):
+            if denominator[j, l] >= 1.:
+                mu_hat[j, l] = numerator[j, l]/denominator[j, l]  # OK
+            else:
+                mu_hat[j, l] = mixture.mu[j, l]
+
+    numerator = np.zeros([K])
+    denominator = np.zeros([K])
+    for j in range(K):
+        for u in range(n):
+            Cu = X[u].nonzero()[0]
+            for l in Cu:
+                numerator[j] += post[u, j] * (X[u, l] - mu_hat[j, l])**2 
+            denominator[j] += post[u, j] * len(Cu)
+    var_hat = numerator/denominator
+
+    for j in range(K):
+        var_hat[j] = max(0.25, var_hat[j])  #OK
+        
+    return GaussianMixture(mu_hat, var_hat, p_hat)
 
 
 def run(X: np.ndarray, mixture: GaussianMixture,
@@ -76,7 +111,8 @@ def run(X: np.ndarray, mixture: GaussianMixture,
             for all components for all examples
         float: log-likelihood of the current assignment
     """
-    return estep(X, mixture)
+    post, log_likelihood = estep(X, mixture)
+    mixture = mstep(X, post, mixture)
 
 
 def fill_matrix(X: np.ndarray, mixture: GaussianMixture) -> np.ndarray:

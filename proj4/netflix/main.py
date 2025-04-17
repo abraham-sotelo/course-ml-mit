@@ -56,8 +56,13 @@ def bic_em():
 
   print("\nBest BIC")
   print(f"Cluster: {k}, Best BIC: {best_bic:.6f}")
-  
+
+
+# Problem 7. Implementing EM for matrix completion
+def em():
+  pass
 
 #k_means()
 #naiveem()
-bic_em()
+#bic_em()
+#em()

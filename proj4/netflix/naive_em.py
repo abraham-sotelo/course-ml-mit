@@ -18,7 +18,6 @@ def estep(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, float]:
     n, d = X.shape
     K, _ = mixture.mu.shape
     post = np.zeros((n, K))
-    weighted_likelihoods = np.zeros(K)
 
     log_likelihood = 0
     for i in range(n):

@@ -49,10 +49,28 @@ post_expected = np.array(
 )
 log_likelihood_expected = -152.16319226209848
 print("First e-step run -------------------------")
-post, log_likelihood = em.run(X, mixture, post)
+post, log_likelihood = em.estep(X, mixture)
 assert post.shape == (n, K)
-assert post.all() == post_expected.all()
-print(f"Output log_likelihood = {log_likelihood}")
+np.testing.assert_allclose(post, post_expected, atol=1e-8)
+print(f"Output log_likelihood = {log_likelihood:.4f}")
 assert log_likelihood == log_likelihood_expected
+print("First e-step OK --------------------------")
+
+# First run m-step --------------------------------------------------
+mu_expected = np.array([
+    [2.38279095, 4.64102716, 3.73583539, 4.28989488, 2.17237898],
+    [2.56629755, 4.6686168,  3.24084599, 3.88882023, 2.72874336],
+    [2.45674721, 4.72686227, 3.55798344, 4.05614484, 2.5030405 ],
+    [2.00305536, 4.7674522,  3.37388115, 3.7905181,  2.97986269]
+])
+var_expected = np.array([0.71489705, 0.64830186, 0.73650336, 0.85722393])
+p_expected = np.array([0.13810266, 0.17175435, 0.46575794, 0.22438505])
+print("First m-step run -------------------------")
+mixture = em.mstep(X, post, mixture)
+np.testing.assert_allclose(mixture.p, p_expected, atol=1e-8)
+assert mixture.mu.shape == mu_expected.shape
+np.testing.assert_allclose(mixture.mu, mu_expected, atol=1e-8)
+np.testing.assert_allclose(mixture.var, var_expected, atol=1e-8)
+print("First m-step OK --------------------------")
 
 print("All tests OK!")
