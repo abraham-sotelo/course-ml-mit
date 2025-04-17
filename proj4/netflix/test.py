@@ -19,9 +19,9 @@ mu_expected = np.array(
 var_expected = np.array([5.93, 4.87, 3.99, 4.51])
 p_expected = np.array([0.25, 0.25, 0.25, 0.25])
 
-assert mixture.mu.all() == mu_expected.all()
-assert mixture.var.all() == var_expected.all()
-assert mixture.p.all() == p_expected.all()
+np.testing.assert_allclose(mixture.mu, mu_expected)
+np.testing.assert_allclose(mixture.var, var_expected)
+np.testing.assert_allclose(mixture.p, p_expected)
 print("Init tests OK!")
 
 # First run e-step --------------------------------------------------
@@ -72,5 +72,54 @@ assert mixture.mu.shape == mu_expected.shape
 np.testing.assert_allclose(mixture.mu, mu_expected, atol=1e-8)
 np.testing.assert_allclose(mixture.var, var_expected, atol=1e-8)
 print("First m-step OK --------------------------")
+
+# Run em-algorithm ------------------------------------------------
+post_expected = np.array([
+    [8.35114583e-01, 1.26066023e-01, 8.03346942e-03, 3.07859243e-02],
+    [2.29595284e-04, 9.30406661e-01, 6.93634633e-02, 2.80840424e-07],
+    [9.98723643e-01, 1.34234094e-04, 1.14212255e-03, 1.65905887e-14],
+    [1.85331147e-04, 1.94115053e-03, 9.97873518e-01, 2.57285049e-14],
+    [1.82091725e-08, 8.82200084e-01, 1.17730763e-01, 6.91351811e-05],
+    [2.13395201e-14, 1.74763538e-08, 1.23289877e-04, 9.99876693e-01],
+    [9.78452231e-01, 2.41596929e-05, 2.15236097e-02, 2.05795060e-14],
+    [1.95291523e-06, 3.46537075e-03, 9.96532634e-01, 4.18625878e-08],
+    [2.53995753e-04, 9.99058306e-01, 6.46220953e-04, 4.14767958e-05],
+    [1.39755279e-03, 8.96199140e-01, 1.02340131e-01, 6.31761952e-05],
+    [1.02964283e-05, 9.98438589e-01, 1.55110233e-03, 1.18280899e-08],
+    [9.99175360e-01, 4.92298629e-07, 8.24147990e-04, 5.73816393e-13],
+    [4.54696111e-06, 9.96705586e-01, 3.28986689e-03, 1.91139775e-10],
+    [4.13182467e-02, 1.40457914e-05, 9.58667653e-01, 5.48560980e-08],
+    [9.22358785e-14, 4.78927600e-06, 3.67220413e-07, 9.99994844e-01],
+    [2.36604822e-04, 9.96136619e-01, 3.62659186e-03, 1.84275504e-07],
+    [1.09042309e-01, 2.42442342e-01, 6.48515348e-01, 8.68166867e-11],
+    [9.62134995e-01, 1.21159085e-04, 3.77438456e-02, 5.30337126e-16],
+    [1.39885506e-04, 2.34579872e-06, 9.99672523e-01, 1.85246074e-04],
+    [6.05773445e-01, 1.29236657e-02, 3.81302856e-01, 3.38895349e-08]
+])
+log_likelihood_expected = -84.98451993042474
+mu_expected = np.array([
+    [2.00570178, 4.99062403, 3.13772745, 4.00124767, 1.16193276],
+    [2.99396416, 4.68350343, 3.00527213, 3.52422521, 3.08969957],
+    [2.54539306, 4.20213487, 4.56501823, 4.55520636, 2.31130827],
+    [1.01534912, 4.99975322, 3.49251807, 3.99998124, 4.99986013]
+])
+var_expected = np.array([0.25, 0.25, 0.44961685, 0.27930039])
+p_expected = np.array([0.27660973, 0.35431424, 0.26752518, 0.10155086])
+print("Run em-algorithm -------------------------")
+mixture, post = common.init(X, K)
+mixture, post, log_likelihood = em.run(X, mixture, post)
+np.testing.assert_allclose(post, post_expected, atol=1e-8)
+print("post OK")
+print(f"Output log_likelihood = {log_likelihood:.4f}")
+assert log_likelihood == log_likelihood_expected
+print("log_likelihood OK")
+np.testing.assert_allclose(mixture.p, p_expected, atol=1e-8)
+print("p OK")
+assert mixture.mu.shape == mu_expected.shape
+np.testing.assert_allclose(mixture.mu, mu_expected, atol=1e-8)
+print("mu OK")
+np.testing.assert_allclose(mixture.var, var_expected, atol=1e-8)
+print("var OK")
+print("Run em-algorithm OK-----------------------")
 
 print("All tests OK!")
