@@ -58,11 +58,26 @@ def bic_em():
   print(f"Cluster: {k}, Best BIC: {best_bic:.6f}")
 
 
-# Problem 7. Implementing EM for matrix completion
-def em():
-  pass
+# Problem 8. Using the mixture model for collaborative filtering
+def em_netflix():
+  X = np.loadtxt("netflix_incomplete.txt")
+  max_log_likelihood = []
+  for K in [1, 12]:
+    log_likelihoods = []
+    for seed in range(5):
+      mixture, post = common.init(X, K, seed)
+      mixture, post, log_likelihood = em.run(X, mixture, post)
+      log_likelihoods.append((K, seed, log_likelihood))
+      print(f"K={K}, seed={seed}, log-likelihood={log_likelihood:.4f}")
+    max_log_likelihood.append(max(log_likelihoods, key=lambda x: x[2]))
+    common.plot(X, mixture, post, f"EM algorithm K={K}")
+
+  print("\nMaximun log-likelihood")
+  for k, seed, log_likelihood in max_log_likelihood:
+    print(f"Cluster: {k}, seed: {seed}, log-likelihood: {log_likelihood:.5f}")
+
 
 #k_means()
 #naiveem()
 #bic_em()
-#em()
+em_netflix()
