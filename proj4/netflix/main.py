@@ -76,8 +76,17 @@ def em_netflix():
   for k, seed, log_likelihood in max_log_likelihood:
     print(f"Cluster: {k}, seed: {seed}, log-likelihood: {log_likelihood:.5f}")
 
+# Problem 8 comparing with gold targets
+def compare_netflix():
+  X = np.loadtxt("netflix_incomplete.txt")
+  X_gold = np.loadtxt("netflix_complete.txt")
+  mixture, post = common.init(X, K=12, seed=1)
+  mixture, post, log_likelihood = em.run(X, mixture, post)
+  X_pred = em.fill_matrix(X, mixture)
+  print(f"rmse = {em.rmse(X_pred, X_gold)}")
 
 #k_means()
 #naiveem()
 #bic_em()
-em_netflix()
+#em_netflix()
+compare_netflix()

@@ -3,7 +3,7 @@ import em
 import common
 
 X = np.loadtxt("test_incomplete.txt")
-#X_gold = np.loadtxt("test_complete.txt")
+X_gold = np.loadtxt("test_complete.txt")
 
 # Initialization ----------------------------------------------------
 K = 4
@@ -122,4 +122,34 @@ np.testing.assert_allclose(mixture.var, var_expected, atol=1e-8)
 print("var OK")
 print("Run em-algorithm OK-----------------------")
 
+# Fill matrix -----------------------------------------------------
+X_pred_expected = np.array([
+    [2.,         5.,         3.,         3.94554203, 1.53247395],
+    [3.,         5.,         3.11376,    4.,         3.],
+    [2.,         4.98967752, 3.,         3.,         1.],
+    [4.,         4.20321354, 4.,         5.,         2.],
+    [3.,         4.,         3.18859109, 3.64540838, 4.],
+    [1.,         4.99965498, 4.,         5.,         5.],
+    [2.,         5.,         3.16858887, 4.01321529, 1.],
+    [3.,         4.20380457, 5.,         4.,         3.],
+    [2.99334056, 5.,         3.,         3.,         3.],
+    [2.,         4.63458935, 3.16542905, 3.,         3.],
+    [3.,         4.,         3.,         3.,         3.],
+    [1.,         5.,         3.,         4.00170707, 1.],
+    [4.,         5.,         3.,         4.,         3.],
+    [1.,         4.,         4.50628741, 5.,         2.],
+    [1.,         5.,         3.,         3.,         5.],
+    [3.,         5.,         3.,         4.,         3.],
+    [3.,         4.40437447, 4.03220151, 4.,         2.],
+    [3.,         5.,         3.,         5.,         1.],
+    [2.,         4.,         5.,         5.,         2.3116484 ],
+    [2.,         5.,         4.,         4.,         2.]
+])
+rmse_expected = 0.3152301205749675
+print("Run Fill matrix --------------------------")
+X_pred = em.fill_matrix(X, mixture)
+np.testing.assert_allclose(X_pred, X_pred_expected, atol=1e-8)
+print("Fill matrix OK")
+assert em.rmse(X_pred, X_gold) == rmse_expected
+print("rmse OK")
 print("All tests OK!")

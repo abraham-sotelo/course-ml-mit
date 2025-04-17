@@ -130,4 +130,38 @@ def fill_matrix(X: np.ndarray, mixture: GaussianMixture) -> np.ndarray:
     Returns
         np.ndarray: a (n, d) array with completed data
     """
-    raise NotImplementedError
+    n, d = X.shape
+    X_pred = X.copy()
+    K, _ = mixture.mu.shape
+
+    # e-step again -----------------------------------------
+    post = np.zeros((n, K))
+    total_log_likelihood = np.float64(0.0)
+    for i in range(n):
+        Cu = X[i].nonzero()[0]
+        d_Cu = len(Cu)
+        log_likelihood = np.float64(0.0)
+        log_weighted_likelihoods = np.zeros(K)
+        for j in range(K):
+            # Log-Gaussian
+            diff = X[i, Cu] - mixture.mu[j, Cu]
+            square_distance = np.sum(diff ** 2)
+            log_gaussian = square_distance/(-2. * mixture.var[j]) \
+                - ((d_Cu / 2) * np.log(2 * np.pi * mixture.var[j]))
+            # End Log-Gaussian
+            log_weighted_likelihoods[j] = np.log(mixture.p[j]) + log_gaussian
+        log_likelihood = logsumexp(log_weighted_likelihoods)
+        post[i] = np.exp(log_weighted_likelihoods - log_likelihood)
+        total_log_likelihood += log_likelihood
+    # ------------------------------------------------------
+
+    for i in range(n):
+        for l in range(d):
+            if X[i, l] == 0:
+                X_pred[i, l] = np.dot(post[i], mixture.mu[:, l])
+
+    return X_pred
+
+def rmse(X_pred, X_gold):
+    return np.sqrt( np.sum((X_pred - X_gold)**2) / X_gold.size)
+
