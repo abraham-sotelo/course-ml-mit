@@ -16,10 +16,10 @@ def naive_estep(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, fl
             for all components for all examples
         float: log-likelihood of the assignment
     """
-    _, d = X.shape 
+    _, d = X.shape
     mu, var, p = mixture
 
-    diff = (X[:,np.newaxis,:] - mu[np.newaxis,:,:])
+    diff = X[:,np.newaxis,:] - mu[np.newaxis,:,:]
     square_distance = np.sum(diff**2, axis=2)
     power = square_distance / (-2 * var)
     gaussian = np.exp(power) / (2 * np.pi * var)**(d/2)
@@ -27,7 +27,7 @@ def naive_estep(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, fl
     likelihood = np.sum(weighted, axis=1, keepdims=True)
     post = weighted / likelihood
     log_likelihood = np.sum(np.log(likelihood))
-    
+
     return post, log_likelihood
 
 def naive_estep_compact(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, float]:
@@ -40,3 +40,65 @@ def naive_estep_compact(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.nda
     log_likelihood = np.sum(np.log(likelihood))
 
     return post, log_likelihood
+
+
+def naive_mstep(X: np.ndarray, post: np.ndarray) -> GaussianMixture:
+    """M-step: Updates the gaussian mixture by maximizing the log-likelihood
+    of the weighted dataset
+
+    Args:
+        X: (n, d) array holding the data
+        post: (n, K) array holding the soft counts
+            for all components for all examples
+
+    Returns:
+        GaussianMixture: the new gaussian mixture
+    """
+    n, d = X.shape
+    _, K = post.shape
+
+    n_hat = np.sum(post, axis=0)
+    p_hat = n_hat / n
+
+    mu_hat = post.T @ X / n_hat[:,np.newaxis]
+    diff = X[:,np.newaxis,:] - mu_hat[np.newaxis,:,:]
+    square_distance = np.sum(diff**2, axis=2)
+    var_hat = np.sum(post * square_distance, axis=0) / (n_hat * d)
+
+    return GaussianMixture(mu_hat, var_hat, p_hat)
+
+def naive_mstep_compact(X: np.ndarray, post: np.ndarray) -> GaussianMixture:
+    n, d = X.shape
+    _, K = post.shape
+
+    nh = np.sum(post, axis=0)
+    ph = nh / n
+    muh = post.T @ X / nh[:,np.newaxis]
+    vah = np.sum(post * np.sum((X[:,np.newaxis,:] - muh[np.newaxis,:,:])**2, axis=2), axis=0) / (nh * d)
+
+    return GaussianMixture(muh, vah, ph)
+
+
+def naive_run(X: np.ndarray, mixture: GaussianMixture,
+        post: np.ndarray) -> Tuple[GaussianMixture, np.ndarray, float]:
+    """Runs the mixture model
+
+    Args:
+        X: (n, d) array holding the data
+        post: (n, K) array holding the soft counts
+            for all components for all examples
+
+    Returns:
+        GaussianMixture: the new gaussian mixture
+        np.ndarray: (n, K) array holding the soft counts
+            for all components for all examples
+        float: log-likelihood of the current assignment
+    """
+    old_log_likelihood = None
+    log_likelihood = np.float64(0.0)
+    while old_log_likelihood is None or np.abs(log_likelihood - old_log_likelihood) > 1e-6 * np.abs(log_likelihood):
+      old_log_likelihood = log_likelihood
+      post, log_likelihood = naive_estep_compact(X, mixture)
+      mixture = naive_mstep_compact(X, post)
+
+    return (mixture, post, log_likelihood)

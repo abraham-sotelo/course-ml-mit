@@ -3,6 +3,7 @@ import kmeans
 import common
 import naive_em
 import em
+import vectorized_em
 
 X = np.loadtxt("toy_data.txt")
 n = len(X)
@@ -89,4 +90,24 @@ def compare_netflix():
 #naiveem()
 #bic_em()
 #em_netflix()
-compare_netflix()
+#compare_netflix()
+
+
+# Vectorized ------------------------------------------------------------------
+def vectorized_naiveem():
+  max_log_likelihood = []
+  for K in range(1,5):
+    log_likelihoods = []
+    for seed in range(5):
+      mixture, post = common.init(X, K, seed)
+      mixture, post, log_likelihood = vectorized_em.naive_run(X, mixture, post)
+      log_likelihoods.append((K, seed, log_likelihood))
+      print(f"K={K}, seed={seed}, log-likelihood={log_likelihood:.4f}")
+    max_log_likelihood.append(max(log_likelihoods, key=lambda x: x[2]))
+    #common.plot(X, mixture, post, f"EM algorithm K={K}")
+
+  print("\nMaximun log-likelihood")
+  for k, seed, log_likelihood in max_log_likelihood:
+    print(f"Cluster: {k}, seed: {seed}, log-likelihood: {log_likelihood:.5f}")
+
+vectorized_naiveem()
