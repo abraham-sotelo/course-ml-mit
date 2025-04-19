@@ -192,9 +192,11 @@ def mstep(X: np.ndarray, post: np.ndarray, mixture: GaussianMixture,
     mask_res = mask[:, np.newaxis, :]          # (n, 1, d)
     Cu = np.broadcast_to(mask_res, (n, K, d))  # (n, K, d)
     d_Cu = np.sum(mask, axis=1)                # (n)
-    
+
+    numerator = post.T @ X
     denominator = (post.T @ mask)  # (K, d)
-    mu_hat = np.where(denominator >= 1, (post.T @ X)/denominator, mu)  # (K, d)
+    mu_raw = np.divide(numerator, denominator, out=np.zeros_like(numerator), where=(denominator >= 1))
+    mu_hat = np.where(denominator >= 1, mu_raw, mu)  # (K, d)
 
     sq_diff = np.sum(((X[:, np.newaxis, :] - mu_hat[np.newaxis, :, :])**2) * Cu, axis=2)  # (n, K)
     numerator = np.sum((post*sq_diff), axis=0)           # (K)
@@ -215,9 +217,11 @@ def mstep_compact(X: np.ndarray, post: np.ndarray, mixture: GaussianMixture,
     mask = (X != 0)                                          # (n, d)
     Cu = np.broadcast_to(mask[:, np.newaxis, :], (n, K, d))  # (n, K, d)
     d_Cu = np.sum(mask, axis=1)                              # (n)
-    
+
+    numerator = post.T @ X
     denominator = (post.T @ mask)  # (K, d)
-    mu_hat = np.where(denominator >= 1, (post.T @ X)/denominator, mu)  # (K, d)
+    mu_raw = np.divide(numerator, denominator, out=np.zeros_like(numerator), where=(denominator >= 1))
+    mu_hat = np.where(denominator >= 1, mu_raw, mu)  # (K, d)
 
     var_hat = np.maximum(np.sum((post*np.sum(((X[:, np.newaxis, :] - mu_hat[np.newaxis, :, :])**2) * Cu, axis=2)), axis=0)\
                           / (post.T @ d_Cu), min_variance)   # (K)

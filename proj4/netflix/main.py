@@ -60,6 +60,7 @@ def bic_em():
 
 
 # Problem 8. Using the mixture model for collaborative filtering
+# Modified to use vectorized version
 def em_netflix():
   X = np.loadtxt("netflix_incomplete.txt")
   max_log_likelihood = []
@@ -67,7 +68,7 @@ def em_netflix():
     log_likelihoods = []
     for seed in range(5):
       mixture, post = common.init(X, K, seed)
-      mixture, post, log_likelihood = em.run(X, mixture, post)
+      mixture, post, log_likelihood = vectorized_em.run(X, mixture, post)
       log_likelihoods.append((K, seed, log_likelihood))
       print(f"K={K}, seed={seed}, log-likelihood={log_likelihood:.4f}")
     max_log_likelihood.append(max(log_likelihoods, key=lambda x: x[2]))
@@ -78,18 +79,19 @@ def em_netflix():
     print(f"Cluster: {k}, seed: {seed}, log-likelihood: {log_likelihood:.5f}")
 
 # Problem 8 comparing with gold targets
+# Modified to use vectorized version
 def compare_netflix():
   X = np.loadtxt("netflix_incomplete.txt")
   X_gold = np.loadtxt("netflix_complete.txt")
   mixture, post = common.init(X, K=12, seed=1)
-  mixture, post, log_likelihood = em.run(X, mixture, post)
-  X_pred = em.fill_matrix(X, mixture)
+  mixture, post, log_likelihood = vectorized_em.run(X, mixture, post)
+  X_pred = vectorized_em.fill_matrix(X, mixture)
   print(f"rmse = {em.rmse(X_pred, X_gold)}")
 
 #k_means()
 #naiveem()
 #bic_em()
-#em_netflix()
+em_netflix()
 #compare_netflix()
 
 
@@ -110,4 +112,4 @@ def vectorized_naiveem():
   for k, seed, log_likelihood in max_log_likelihood:
     print(f"Cluster: {k}, seed: {seed}, log-likelihood: {log_likelihood:.5f}")
 
-vectorized_naiveem()
+#vectorized_naiveem()
