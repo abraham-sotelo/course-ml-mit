@@ -102,3 +102,59 @@ def naive_run(X: np.ndarray, mixture: GaussianMixture,
       mixture = naive_mstep_compact(X, post)
 
     return (mixture, post, log_likelihood)
+
+
+def estep(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, float]:
+    """E-step: Softly assigns each datapoint to a gaussian component
+
+    Args:
+        X: (n, d) array holding the data, with incomplete entries (set to 0)
+        mixture: the current gaussian mixture
+
+    Returns:
+        np.ndarray: (n, K) array holding the soft counts
+            for all components for all examples
+        float: log-likelihood of the assignment
+
+    """
+    n, d = X.shape
+    mu, var, p = mixture
+    K, _ = mu.shape
+    # Reshaping
+    Xr = X[:,np.newaxis,:]     # (n, 1, d)
+    mur = mu[np.newaxis,:,:]   # (1, K, d)
+    varr = var[np.newaxis, :]  # (1, K)
+    pr = p[np.newaxis, :]      # (1, K)
+    # Cu is a mask of the observed values per point x cluster
+    mask = (X != 0)                            # (n, d)
+    mask_res = mask[:, np.newaxis, :]          # (n, 1, d)
+    Cu = np.broadcast_to(mask_res, (n, K, d))  # (n, K, d)
+    # d_Cu = number of observed dimensions per point x cluster
+    d_Cu = np.sum(Cu, axis=2)                  # (n, K)
+
+    sq_diff = np.sum(((Xr - mur)**2) * Cu, axis=2)        # (n, K, d) -> (n, K)
+    component1 = (sq_diff / (-2 * varr))                   # (n, K)
+    component2 = (-d_Cu / 2) * np.log(2 * np.pi * varr)   # (n, K) * (K) -> (n, K)
+    log_gaussian = component1 + component2                # (n, K)
+    log_weighted = np.log(pr) + log_gaussian              # (K) + (n, K) -> (n, K)
+    log_likelihood = logsumexp(log_weighted, axis=1, keepdims=True)  # (n, 1)
+    post = np.exp(log_weighted - log_likelihood)          # (n, K)
+    total_log_likelihood = np.sum(log_likelihood)         # Scalar
+
+    return (post, total_log_likelihood)
+
+def estep_compact(X: np.ndarray, mixture: GaussianMixture) -> Tuple[np.ndarray, float]:
+    n, d = X.shape
+    mu, var, p = mixture
+    K, _ = mu.shape
+    varr = var[np.newaxis, :]  # Reshaping var (1, K)
+
+    Cu = np.broadcast_to((X != 0)[:, np.newaxis, :], (n, K, d))  # (n, K, d)
+    d_Cu = np.sum(Cu, axis=2)  # (n, K)
+
+    log_gaussian = (np.sum(((X[:,np.newaxis,:] - mu[np.newaxis,:,:])**2) * Cu, axis=2) / (-2 * varr)) \
+      + (-d_Cu / 2) * np.log(2 * np.pi * varr)                       # (n, K)
+    log_weighted = np.log(p[np.newaxis, :]) + log_gaussian           # (n, K)
+    log_likelihood = logsumexp(log_weighted, axis=1, keepdims=True)  # (n, 1)
+
+    return (np.exp(log_weighted - log_likelihood), np.sum(log_likelihood))

@@ -1,6 +1,7 @@
 import numpy as np
 import em
 import common
+import vectorized_em
 
 X = np.loadtxt("test_incomplete.txt")
 X_gold = np.loadtxt("test_complete.txt")
@@ -49,13 +50,12 @@ post_expected = np.array(
 )
 log_likelihood_expected = -152.16319226209848
 print("First e-step run -------------------------")
-post, log_likelihood = em.estep(X, mixture)
+post, log_likelihood = vectorized_em.estep_compact(X, mixture)
 assert post.shape == (n, K)
 np.testing.assert_allclose(post, post_expected, atol=1e-8)
 print(f"Output log_likelihood = {log_likelihood:.4f}")
-assert log_likelihood == log_likelihood_expected
+np.testing.assert_almost_equal(log_likelihood, log_likelihood_expected)
 print("First e-step OK --------------------------")
-
 # First run m-step --------------------------------------------------
 mu_expected = np.array([
     [2.38279095, 4.64102716, 3.73583539, 4.28989488, 2.17237898],
