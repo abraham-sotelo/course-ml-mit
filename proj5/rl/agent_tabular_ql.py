@@ -1,6 +1,8 @@
 """Tabular QL agent"""
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib import pyplot as plt
 from tqdm import tqdm
 import framework
 import utils
@@ -94,28 +96,38 @@ def run_episode(for_training):
     """
     epsilon = TRAINING_EP if for_training else TESTING_EP
 
-    epi_reward = None
+    epi_reward = 0.
     # initialize for each episode
     # TODO Your code here
+    t = 0
 
     (current_room_desc, current_quest_desc, terminal) = framework.newGame()
 
     while not terminal:
         # Choose next action and execute
         # TODO Your code here
+        current_state_1 = dict_room_desc[current_room_desc]
+        current_state_2 = dict_quest_desc[current_quest_desc]
+        action, object = epsilon_greedy(current_state_1, current_state_2, q_func, epsilon)
+        next_room_desc, next_quest_desc, reward, terminal = framework.step_game(current_room_desc, current_quest_desc, action, object)
+        next_state_1 = dict_room_desc[next_room_desc]
+        next_state_2 = dict_quest_desc[next_quest_desc]
 
         if for_training:
             # update Q-function.
             # TODO Your code here
-            pass
+            tabular_q_learning(q_func, current_state_1, current_state_2, action, object, reward, next_state_1, next_state_2, terminal)
 
         if not for_training:
             # update reward
             # TODO Your code here
-            pass
+            epi_reward += (GAMMA**t) * reward
+            t += 1
 
         # prepare next step
         # TODO Your code here
+        current_room_desc = next_room_desc
+        current_quest_desc = next_quest_desc
 
     if not for_training:
         return epi_reward
@@ -168,6 +180,7 @@ if __name__ == '__main__':
         epoch_rewards_test.append(run())
 
     epoch_rewards_test = np.array(epoch_rewards_test)
+    print(f"Last average episodic reward: {np.mean(epoch_rewards_test[-1])}")
 
     x = np.arange(NUM_EPOCHS)
     fig, axis = plt.subplots()
